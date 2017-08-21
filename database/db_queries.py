@@ -67,19 +67,22 @@ def store_resampled_data(currency, ohlc):
     end = ohlc.index.max()  # pandas.tslib.Timestamp
 
     for y in range(begin.year, end.year + 1):  # Store 1 year of data
+        ohlc_y = ohlc[datetime(y, 1, 1):datetime(y, 12, 31)]
+        begin = ohlc_y.index.min()  # pandas.tslib.Timestamp
+        end = ohlc_y.index.max()  # pandas.tslib.Timestamp
         for pricetype in ['open', 'high', 'low', 'close']:
             # Todo: Now data is stored as {date:[...], close:[...] would it be better if stored as # {close: {date:price}} ?
             filter_doc = {'currency': currency,
                           'type': 'resampled',
                           'pricetype': pricetype,
                           'freq': freq,
-                          'year': y,
+                          'year': y
                           }
 
             update_doc = {'$set': {'begin': begin,
                                    'end': end,
-                                   'date': ohlc.index.tolist(),
-                                   pricetype: ohlc[pricetype].values.tolist(),
+                                   'date': ohlc_y.index.tolist(),
+                                   pricetype: ohlc_y[pricetype].values.tolist(),
                                    }}
 
             client = MongoClient(host=MONGO_HOST, port=MONGO_PORT)
@@ -129,5 +132,26 @@ def get_all_raw_data(currency='EURUSD', frequency='min', begin='1970-01', end='2
     return pd.concat(frames)
 
 
+def get_all_resampled_data(currency='EURUSD', frequency='D', begin='1970', end='2020', pricetype='close'):
+    client = MongoClient(host=MONGO_HOST, port=MONGO_PORT)
+    db = client[DB]
+    begin_y = int(begin)
+    end_y = int(end)
+    result = db.forex.find({'currency': currency,
+                            'type': 'resampled',
+                            'pricetype': pricetype,
+                            'freq': frequency,
+                            'year': {'$gte': begin_y, '$lte': end_y},
+                            })
+    frames = []
+    print 'Got {} {}-{}-{} documents'.format(result.count(), currency, frequency, pricetype)
+    for doc in result:
+        result_df = pd.DataFrame({'date': doc['date'], pricetype: doc[pricetype]})
+        result_df.set_index(keys='date', inplace=True)
+        frames.append(result_df)
+    return pd.concat(frames)
+
+
 if __name__ == '__main__':
-    print get_all_raw_data()
+    # print get_all_raw_data()
+    print get_all_resampled_data(currency='EURUSD', frequency='D', begin='2009', end='2010', pricetype='open')
