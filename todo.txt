@@ -1,0 +1,5 @@
+Todo
+
+Check other forex datasources:
+- https://www.dukascopy.com/swiss/english/marketwatch/historical/
+

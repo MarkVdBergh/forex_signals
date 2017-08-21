@@ -14,9 +14,10 @@ else:
 MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
 
-
 # Localization settings
 LOCAL_TIMEZONE = 'Europe/Brussels'
 LOCAL_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-print "HELP"
+# Currency list
+CURRENCIES = ['EURUSD', 'EURCHF', 'EURGBP', 'EURJPY', 'USDCAD']
+# CURRENCIES=['EURUSD']
