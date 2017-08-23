@@ -4,7 +4,7 @@ import pandas as pd
 import sys
 from pymongo import MongoClient
 
-from db_queries import store_raw_data, get_raw_data, get_all_raw_data, store_resampled_data
+from db_queries import store_raw_data, get_raw_data, get_all_raw_data, store_resampled_data, get_all_resampled_data
 from db_settings import MONGO_HOST, MONGO_PORT, DB, CURRENCIES
 
 
@@ -88,8 +88,31 @@ def resample_store_raw_data(currency=None, frequency='min', scale='D'):
             if pt == 'close': frame.append(raw.resample(scale).last())
         ohlc = pd.concat(frame, axis=1)
         store_resampled_data(currency=cur, ohlc=ohlc)
+        frame = []
+
+
+def calculate_returns(currency=None, frequency='D', begin='1970', end='2020', pricetype=None, periods=1):
+    # Todo: should this method be here? Should I save the returns?
+    if currency: currencies = [currency]
+    else: currencies = CURRENCIES
+    if pricetype: pricetypes = [pricetype]
+    else: pricetypes = ['open', 'high', 'low', 'close']
+
+    cframes = []  # list of dataframes with currencies (ohlc)
+    pframes = []  # list of dataframes with price column ('open' or 'close' or ...)
+    for cur in currencies:
+        for pt in pricetypes:
+            prices = get_all_resampled_data(currency=cur, frequency='D', begin=begin, end=end, pricetype=pt)
+            pframes.append(prices.pct_change(periods=periods))
+        cframes.append(pd.concat(pframes, axis=1))
+        pframes = []  # list of dataframes with price column ('open' or 'close' or ...)
+    df = pd.concat(cframes, keys=currencies,axis=1)
+    return df.dropna(how='any')
 
 
 if __name__ == '__main__':
     # load_store_all_raw_data()
-    resample_store_raw_data()
+    # resample_store_raw_data()
+    # print calculate_returns(currency='EURUSD', begin='2005', end='2007', periods=1)
+    print calculate_returns(begin='2007', end='2008', periods=1)
+    pass
