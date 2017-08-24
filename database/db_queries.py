@@ -133,6 +133,8 @@ def get_all_raw_data(currency='EURUSD', frequency='min', begin='1970-01', end='2
 
 
 def get_all_resampled_data(currency='EURUSD', frequency='D', begin='1970', end='2020', pricetype='close'):
+    # Todo: Load ohlc data iso only o,h,l,c.
+    # Todo: Move to db_workers.py
     client = MongoClient(host=MONGO_HOST, port=MONGO_PORT)
     db = client[DB]
     begin_y = int(begin)
